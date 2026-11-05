@@ -4,9 +4,10 @@
   "private": true,
   "description": "Онлайн дэлгүүр - 5 эрхтэй (зочин, худалдан авагч, дэлгүүр, хүргэлт, админ) мобайл апп-ын веб хувилбар",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "dev": "node scripts/local-server.js",
     "build": "echo \"Static site, nothing to build\""
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
