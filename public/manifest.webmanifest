@@ -1,0 +1,9 @@
+{
+  "name": "Онлайн дэлгүүр",
+  "short_name": "Дэлгүүр",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F3FA",
+  "theme_color": "#5B4BF0",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
