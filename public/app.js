@@ -38,6 +38,7 @@ wave:'<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 10V4.5a1.5 1.5 0 0 1 3 0V10M14 10V
 eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
 send:'<path d="M4 12 20 4l-6 16-3-7z"/>',
 edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+monitor:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
 cash:'<rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h.01M18 12h.01"/><circle cx="12" cy="12" r="2"/>'
 };
 const ic=(n,cls)=>'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
@@ -116,7 +117,8 @@ try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.products)S=seed();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 
-const U={role:null,stack:[{s:'roles'}],cat:'all',q:'',slot:1,qty:1,sheet:null,toast:'',pay:'Банкны карт',rate:5,swiped:null,regRole:'buyer',addOpen:false};
+let VIEW='mobile';try{VIEW=localStorage.getItem('online-delguur-view')||'mobile'}catch(e){}
+const U={view:VIEW,role:null,stack:[{s:'roles'}],cat:'all',q:'',slot:1,qty:1,sheet:null,toast:'',pay:'Банкны карт',rate:5,swiped:null,regRole:'buyer',addOpen:false};
 const cur=()=>U.stack[U.stack.length-1];
 const prod=id=>S.products.find(p=>p.id===id);
 const store=id=>S.stores.find(s=>s.id===id);
@@ -174,7 +176,7 @@ const SCR={};
 
 SCR.roles=()=>({raw:true,body:
  '<div class="hero"><i style="width:170px;height:170px;right:-30px;top:-40px"></i><i style="width:120px;height:120px;left:-50px;top:170px"></i></div>'+
- '<div class="roles"><div class="logo">'+ic('bag')+'</div><h1>Онлайн дэлгүүр</h1><div class="tl">Нэг дороос бүх дэлгүүр</div><div class="rlist">'+
+ '<div class="roles"><div class="logo">'+ic('bag')+'</div><h1>Онлайн дэлгүүр</h1><div class="tl">Нэг дороос бүх дэлгүүр</div><div class="vlabel">Харах хэлбэр</div>'+viewSwitch()+'<div class="rlist">'+
  Object.keys(ROLES).map(k=>{const r=ROLES[k];return '<button class="rcard" data-a="pickrole" data-x="'+k+'"><span class="ri" style="background:linear-gradient(140deg,'+r.g[0]+','+r.g[1]+')">'+ic(r.icon)+'</span><span class="sp"><b>'+r.name+'</b><span>'+r.desc+'</span></span><span style="color:'+r.g[0]+'">'+ic('chevron')+'</span></button>'}).join('')+
  '</div><button class="reglink" data-a="go" data-x="register">'+ic('user')+'Шинээр бүртгэл үүсгэх</button></div>'});
 
@@ -356,11 +358,14 @@ SCR.complaints=()=>({head:plainHead('Гомдол',true),body:'<div class="body"
 
 /* ---------- render ---------- */
 const phone=document.getElementById('phone');
+function viewSwitch(){const web=U.view==='web';return '<div class="vswitch" role="group" aria-label="Харах хэлбэр"><button class="'+(web?'':'on')+'" data-a="view" data-x="mobile" aria-pressed="'+!web+'">'+ic('phone')+'Мобайл</button><button class="'+(web?'on':'')+'" data-a="view" data-x="web" aria-pressed="'+web+'">'+ic('monitor')+'Веб</button></div>'}
+function navTabs(){const root=U.stack[0].s;return TABS[U.role].map(t=>'<button class="'+(root===t[0]?'on':'')+'" data-a="tab" data-x="'+t[0]+'"><span class="pill">'+ic(t[2])+'</span>'+t[1]+(U.role==='admin'&&t[0]==='aproducts'&&S.products.some(p=>p.approval==='pending')?'<span class="nbadge">'+S.products.filter(p=>p.approval==='pending').length+'</span>':'')+(t[0]==='cart'&&cartCount()?' ('+cartCount()+')':'')+'</button>').join('')}
 function topbar(){
- document.getElementById('topbar').innerHTML='<b>Онлайн дэлгүүр · прототип</b><span class="muted" style="font-size:12px">Шууд орох:</span>'+Object.keys(ROLES).map(k=>'<button class="'+(U.role===k?'on':'')+'" data-a="enter" data-x="'+k+'">'+ROLES[k].name+'</button>').join('')+'<button class="reset" data-a="logout">Эхлэл</button><button class="reset" data-a="reset">Өгөгдөл сэргээх</button>';
+ document.getElementById('topbar').innerHTML=viewSwitch()+'<b>Онлайн дэлгүүр · прототип</b><span class="muted" style="font-size:12px">Шууд орох:</span>'+Object.keys(ROLES).map(k=>'<button class="'+(U.role===k?'on':'')+'" data-a="enter" data-x="'+k+'">'+ROLES[k].name+'</button>').join('')+'<button class="reset" data-a="logout">Эхлэл</button><button class="reset" data-a="reset">Өгөгдөл сэргээх</button>';
 }
 function render(resetScroll){
- const c=cur();const out=SCR[c.s](c);
+ const c=cur();const out=SCR[c.s](c);const web=U.view==='web';
+ document.body.classList.toggle('web',web);phone.dataset.s=c.s;
  const r=ROLES[c.r||U.role]||ROLES.buyer;
  phone.style.setProperty('--g1',r.g[0]);phone.style.setProperty('--g2',r.g[1]);
  phone.style.setProperty('--tint',r.tint);phone.style.setProperty('--tintInk',r.ink);
@@ -371,7 +376,8 @@ function render(resetScroll){
  h+='<div class="scroll">'+(out.head||'')+(out.raw?'':'')+out.body+'</div>';
  if(out.composer)h+='<form class="composer" id="composer" data-to="'+out.composer.to+'" data-as="'+out.composer.as+'" data-buyer="'+esc(out.composer.buyer)+'"><input id="msg" placeholder="Мессеж бичих" autocomplete="off" aria-label="Мессеж"><button type="submit" aria-label="Илгээх">'+ic('send')+'</button></form>';
  if(out.bottom)h+='<div class="bottom">'+out.bottom+'</div>';
- if(out.nav&&U.role){const root=U.stack[0].s;h+='<nav class="nav">'+TABS[U.role].map(t=>'<button class="'+(root===t[0]?'on':'')+'" data-a="tab" data-x="'+t[0]+'"><span class="pill">'+ic(t[2])+'</span>'+t[1]+(U.role==='admin'&&t[0]==='aproducts'&&S.products.some(p=>p.approval==='pending')?'<span class="nbadge">'+S.products.filter(p=>p.approval==='pending').length+'</span>':'')+(t[0]==='cart'&&cartCount()?' ('+cartCount()+')':'')+'</button>').join('')+'</nav>'}
+ if(web)h='<nav class="nav wnav"><button class="brand" data-a="'+(U.role?'tab':'logout')+'" data-x="'+(U.role?START[U.role]:'')+'"><span class="blogo">'+ic('bag')+'</span><span>Онлайн дэлгүүр'+(U.role?'<small>'+ROLES[U.role].name+'</small>':'')+'</span></button>'+(U.role?'<div class="wtabs">'+navTabs()+'</div>':'')+'<span class="sp"></span>'+viewSwitch()+(U.role?'<button class="wout" data-a="logout">'+ic('logout')+'Гарах</button>':'')+'</nav>'+h;
+ else if(out.nav&&U.role)h+='<nav class="nav">'+navTabs()+'</nav>';
  if(U.sheet)h+='<div class="scrim" data-a="closesheet"><div class="sheet" data-stop="1">'+U.sheet+'</div></div>';
  if(U.toast)h+='<div class="toast" role="status">'+esc(U.toast)+'</div>';
  phone.innerHTML=h;
@@ -437,6 +443,7 @@ const A={
  sverify:x=>{const s=store(x);s.verified=!s.verified;save();toast(s.name+(s.verified?' баталгаажлаа':' баталгаажуулалт цуцлагдлаа'))},
  resolve:x=>{S.complaints.find(c=>c.id===x).resolved=true;save();toast('Гомдол шийдвэрлэгдлээ')},
  regrole:x=>{U.regRole=x;render()},
+ view:x=>{U.view=x;try{localStorage.setItem('online-delguur-view',x)}catch(e){}render(true)},
  reset:()=>{S=seed();save();U.sheet=null;toast('Жишээ өгөгдөл сэргээгдлээ')}
 };
 document.addEventListener('click',e=>{
